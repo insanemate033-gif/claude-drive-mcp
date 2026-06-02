@@ -1,4 +1,5 @@
 import os
+import json
 from mcp.server.fastmcp import FastMCP
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -6,8 +7,6 @@ from googleapiclient.discovery import build
 # 1. Initialize FastMCP 
 # (This acts as your MCP bridge AND your web server all at once)
 mcp = FastMCP("Claude-Drive-Server")
-
-import json
 
 # --- 2. GOOGLE DRIVE AUTHENTICATION ---
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
@@ -22,6 +21,8 @@ else:
     creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 
 drive_service = build('drive', 'v3', credentials=creds)
+
+
 # --- 3. CLAUDE'S TOOLS ---
 @mcp.tool()
 def list_files() -> str:
@@ -47,7 +48,11 @@ def read_file(file_id: str) -> str:
     except Exception as e:
         return f"Error reading file (Ensure it is a Google Doc): {str(e)}"
 
+
 # --- 4. RUN THE SERVER ---
 if __name__ == "__main__":
-    # FastMCP automatically sets up the SSE web server for you
-    mcp.run(transport='sse')
+    # Render assigns a dynamic port. Default to 8000 for local testing.
+    port = int(os.environ.get("PORT", "8000"))
+    
+    # We MUST bind to 0.0.0.0 for the cloud deployment to see it
+    mcp.run(transport='sse', host="0.0.0.0", port=port)
