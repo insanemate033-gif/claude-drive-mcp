@@ -4,9 +4,10 @@ from mcp.server.fastmcp import FastMCP
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-# 1. Initialize FastMCP 
-# (This acts as your MCP bridge AND your web server all at once)
-mcp = FastMCP("Claude-Drive-Server")
+# --- 1. INITIALIZE FastMCP ---
+# Render assigns a dynamic port. We read it here and bind to 0.0.0.0
+port = int(os.environ.get("PORT", "8000"))
+mcp = FastMCP("Claude-Drive-Server", host="0.0.0.0", port=port)
 
 # --- 2. GOOGLE DRIVE AUTHENTICATION ---
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
@@ -51,8 +52,5 @@ def read_file(file_id: str) -> str:
 
 # --- 4. RUN THE SERVER ---
 if __name__ == "__main__":
-    # Render assigns a dynamic port. Default to 8000 for local testing.
-    port = int(os.environ.get("PORT", "8000"))
-    
-    # We MUST bind to 0.0.0.0 for the cloud deployment to see it
-    mcp.run(transport='sse', host="0.0.0.0", port=port)
+    # Now it just runs the server without the extra arguments!
+    mcp.run(transport='sse')
